@@ -5,7 +5,7 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 
 public class MatrixAnalyzer {
-    public static String run() {
+    public String run() {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Please enter the string that will form the matrix:");
         String matrixString;
@@ -24,7 +24,7 @@ public class MatrixAnalyzer {
         return findResultString();
     }
 
-    private static String findResultString() {
+    private String findResultString() {
         for (int currentIndex = 0; currentIndex < MatrixData.matrix.size(); currentIndex++) {
             if (MatrixData.matrix.get(currentIndex) == MatrixData.word.charAt(0)) {
                 List<Integer> initialIndex = new ArrayList<>();
@@ -38,7 +38,7 @@ public class MatrixAnalyzer {
         return "The matrix does not contain this word!";
     }
 
-    private static List<Integer> getIndices(
+    private List<Integer> getIndices(
             List<Integer> indices, int currentIndex, int searchPoint) {
         if (indices.size() == MatrixData.word.length()) {
             return indices;
@@ -67,12 +67,12 @@ public class MatrixAnalyzer {
         return Collections.emptyList();
     }
 
-    private static boolean isValid(List<Integer> indices, int indexToCheck, int searchPoint) {
+    private boolean isValid(List<Integer> indices, int indexToCheck, int searchPoint) {
         return MatrixData.word.charAt(searchPoint) == MatrixData.matrix.get(indexToCheck)
                 && !indices.contains(indexToCheck);
     }
 
-    private static String buildResult(List<Integer> indices) {
+    private String buildResult(List<Integer> indices) {
         int n = MatrixData.n;
         return indices.stream()
                 .map(index -> "[" + (index / n) + "," + (index % n) + "]")
