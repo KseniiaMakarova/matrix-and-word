@@ -12,7 +12,7 @@ public class MatrixAnalyzer {
         while (true) {
             matrixString = scanner.next().toUpperCase();
             if (Math.sqrt(matrixString.length()) % 1 == 0) {
-                MatrixData.n = (int) Math.sqrt(matrixString.length());
+                MatrixData.dimension = (int) Math.sqrt(matrixString.length());
                 break;
             }
             System.out.println("Sorry, the string of length " + matrixString.length()
@@ -25,11 +25,9 @@ public class MatrixAnalyzer {
     }
 
     private String findResultString() {
-        for (int currentIndex = 0; currentIndex < MatrixData.matrix.size(); currentIndex++) {
-            if (MatrixData.matrix.get(currentIndex) == MatrixData.word.charAt(0)) {
-                List<Integer> initialIndex = new ArrayList<>();
-                initialIndex.add(currentIndex);
-                List<Integer> result = getIndices(initialIndex, currentIndex, 1);
+        for (int matrixIndex = 0; matrixIndex < MatrixData.matrix.size(); matrixIndex++) {
+            if (MatrixData.matrix.get(matrixIndex) == MatrixData.word.charAt(0)) {
+                List<Integer> result = getResultList(new ArrayList<>(), matrixIndex, 1);
                 if (!result.isEmpty()) {
                     return buildResult(result);
                 }
@@ -38,31 +36,50 @@ public class MatrixAnalyzer {
         return "The matrix does not contain this word!";
     }
 
-    private List<Integer> getIndices(
+    private List<Integer> getResultList(
+            List<Integer> oldIndices, int matrixIndex, int searchPoint) {
+        List<Integer> newIndices = new ArrayList<>(oldIndices);
+        newIndices.add(matrixIndex);
+        return checkNeighbourIndices(newIndices, matrixIndex, searchPoint);
+    }
+
+    private List<Integer> checkNeighbourIndices(
             List<Integer> indices, int currentIndex, int searchPoint) {
         if (indices.size() == MatrixData.word.length()) {
             return indices;
         }
-        int n = MatrixData.n;
-        if (currentIndex >= n
-                && isValid(indices,currentIndex - n, searchPoint)) {
-            indices.add(currentIndex - n);
-            return getIndices(indices, currentIndex - n, searchPoint + 1);
+        int dim = MatrixData.dimension;
+        if (currentIndex >= dim
+                && isValid(indices,currentIndex - dim, searchPoint)) {
+            List<Integer> copyList
+                    = getResultList(indices, currentIndex - dim, searchPoint + 1);
+            if (!copyList.isEmpty()) {
+                return copyList;
+            }
         }
-        if (currentIndex < (MatrixData.matrix.size() - n)
-                && isValid(indices, currentIndex + n, searchPoint)) {
-            indices.add(currentIndex + n);
-            return getIndices(indices, currentIndex + n, searchPoint + 1);
+        if (currentIndex < (MatrixData.matrix.size() - dim)
+                && isValid(indices, currentIndex + dim, searchPoint)) {
+            List<Integer> copyList
+                    = getResultList(indices, currentIndex + dim, searchPoint + 1);
+            if (!copyList.isEmpty()) {
+                return copyList;
+            }
         }
-        if (currentIndex % n > 0
+        if (currentIndex % dim > 0
                 && isValid(indices, currentIndex - 1, searchPoint)) {
-            indices.add(currentIndex - 1);
-            return getIndices(indices, currentIndex - 1, searchPoint + 1);
+            List<Integer> copyList
+                    = getResultList(indices, currentIndex - 1, searchPoint + 1);
+            if (!copyList.isEmpty()) {
+                return copyList;
+            }
         }
-        if (currentIndex % n < (n - 1)
+        if (currentIndex % dim < (dim - 1)
                 && isValid(indices, currentIndex + 1, searchPoint)) {
-            indices.add(currentIndex + 1);
-            return getIndices(indices, currentIndex + 1, searchPoint + 1);
+            List<Integer> copyList
+                    = getResultList(indices, currentIndex + 1, searchPoint + 1);
+            if (!copyList.isEmpty()) {
+                return copyList;
+            }
         }
         return Collections.emptyList();
     }
@@ -73,14 +90,14 @@ public class MatrixAnalyzer {
     }
 
     private String buildResult(List<Integer> indices) {
-        int n = MatrixData.n;
+        int dimension = MatrixData.dimension;
         return indices.stream()
-                .map(index -> "[" + (index / n) + "," + (index % n) + "]")
+                .map(index -> "[" + (index / dimension) + "," + (index % dimension) + "]")
                 .collect(Collectors.joining("->"));
     }
 
     private static class MatrixData {
-        static int n;
+        static int dimension;
         static List<Character> matrix;
         static String word;
 
