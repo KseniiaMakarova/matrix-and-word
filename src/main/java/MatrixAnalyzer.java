@@ -1,110 +1,61 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Scanner;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class MatrixAnalyzer {
-    public String run() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Please enter the string that will form the matrix:");
-        String matrixString;
-        while (true) {
-            matrixString = scanner.next().toUpperCase();
-            if (Math.sqrt(matrixString.length()) % 1 == 0) {
-                MatrixData.dimension = (int) Math.sqrt(matrixString.length());
-                break;
-            }
-            System.out.println("Sorry, the string of length " + matrixString.length()
-                    + " can not be transformed to matrix! Try again:");
-        }
-        MatrixData.setMatrix(matrixString);
-        System.out.println("Please enter the word you want to search for:");
-        MatrixData.word = scanner.next().toUpperCase();
-        return findResultString();
-    }
+    private static final int[] ROWS_INDICES_HELPER = new int[] {-1, 1, 0, 0};
+    private static final int[] COLS_INDICES_HELPER = new int[] {0, 0, -1, 1};
 
-    private String findResultString() {
-        for (int matrixIndex = 0; matrixIndex < MatrixData.matrix.size(); matrixIndex++) {
-            if (MatrixData.matrix.get(matrixIndex) == MatrixData.word.charAt(0)) {
-                List<Integer> result = getResultList(new ArrayList<>(), matrixIndex, 1);
-                if (!result.isEmpty()) {
-                    return buildResult(result);
+    public String findPath(String matrixString, String word) {
+        int dimension = (int) Math.sqrt(matrixString.length());
+        char[][] matrix = getMatrix(matrixString, dimension);
+        for (int row = 0; row < dimension; row++) {
+            for (int col = 0; col < dimension; col++) {
+                Optional<List<String>> optionalPath 
+                        = testAndAddNode(row, col, matrix, word, 0, new ArrayList<>());
+                if (optionalPath.isPresent()) {
+                    return String.join("->", optionalPath.get());
                 }
             }
         }
         return "The matrix does not contain this word!";
     }
 
-    private List<Integer> getResultList(
-            List<Integer> oldIndices, int matrixIndex, int searchPoint) {
-        List<Integer> newIndices = new ArrayList<>(oldIndices);
-        newIndices.add(matrixIndex);
-        return checkNeighbourIndices(newIndices, matrixIndex, searchPoint);
+    private char[][] getMatrix(String matrixString, int dimension) {
+        char[][] matrix = new char[dimension][dimension];
+        String[] rows = matrixString.split("(?<=\\G.{" + dimension + "})");
+        for (int i = 0; i < matrix.length; i++) {
+            matrix[i] = rows[i].toCharArray();
+        }
+        return matrix;
     }
 
-    private List<Integer> checkNeighbourIndices(
-            List<Integer> indices, int currentIndex, int searchPoint) {
-        if (indices.size() == MatrixData.word.length()) {
-            return indices;
+    private Optional<List<String>> testAndAddNode(
+            int row, int col, char[][] matrix, String word, int charIndex, List<String> path) {
+        String node = "[" + row + "," + col + "]";
+        if (matrix[row][col] != word.charAt(charIndex) || path.contains(node)) {
+            return Optional.empty();
         }
-        int dim = MatrixData.dimension;
-        if (currentIndex >= dim
-                && isValid(indices,currentIndex - dim, searchPoint)) {
-            List<Integer> copyList
-                    = getResultList(indices, currentIndex - dim, searchPoint + 1);
-            if (!copyList.isEmpty()) {
-                return copyList;
+        List<String> localPath = new ArrayList<>(path);
+        localPath.add(node);
+        if (localPath.size() == word.length()) {
+            return Optional.of(localPath);
+        }
+        for (int i = 0; i < ROWS_INDICES_HELPER.length; i++) {
+            int newRow = row + ROWS_INDICES_HELPER[i];
+            int newCol = col + COLS_INDICES_HELPER[i];
+            if (isNodeValid(newRow, newCol, matrix.length)) {
+                Optional<List<String>> optionalPath
+                        = testAndAddNode(newRow, newCol, matrix, word, charIndex + 1, localPath);
+                if (optionalPath.isPresent()) {
+                    return optionalPath;
+                }
             }
         }
-        if (currentIndex < (MatrixData.matrix.size() - dim)
-                && isValid(indices, currentIndex + dim, searchPoint)) {
-            List<Integer> copyList
-                    = getResultList(indices, currentIndex + dim, searchPoint + 1);
-            if (!copyList.isEmpty()) {
-                return copyList;
-            }
-        }
-        if (currentIndex % dim > 0
-                && isValid(indices, currentIndex - 1, searchPoint)) {
-            List<Integer> copyList
-                    = getResultList(indices, currentIndex - 1, searchPoint + 1);
-            if (!copyList.isEmpty()) {
-                return copyList;
-            }
-        }
-        if (currentIndex % dim < (dim - 1)
-                && isValid(indices, currentIndex + 1, searchPoint)) {
-            List<Integer> copyList
-                    = getResultList(indices, currentIndex + 1, searchPoint + 1);
-            if (!copyList.isEmpty()) {
-                return copyList;
-            }
-        }
-        return Collections.emptyList();
+        return Optional.empty();
     }
 
-    private boolean isValid(List<Integer> indices, int indexToCheck, int searchPoint) {
-        return MatrixData.word.charAt(searchPoint) == MatrixData.matrix.get(indexToCheck)
-                && !indices.contains(indexToCheck);
-    }
-
-    private String buildResult(List<Integer> indices) {
-        int dimension = MatrixData.dimension;
-        return indices.stream()
-                .map(index -> "[" + (index / dimension) + "," + (index % dimension) + "]")
-                .collect(Collectors.joining("->"));
-    }
-
-    private static class MatrixData {
-        static int dimension;
-        static List<Character> matrix;
-        static String word;
-
-        static void setMatrix(String matrixString) {
-            matrix = matrixString.chars()
-                    .mapToObj(character -> (char) character)
-                    .collect(Collectors.toList());
-        }
+    private boolean isNodeValid(int newRow, int newCol, int dimension) {
+        return newRow >= 0 && newCol >= 0 && newRow < dimension && newCol < dimension;
     }
 }
